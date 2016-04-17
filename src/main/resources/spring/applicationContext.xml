@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       					   http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
+
+    <context:component-scan base-package="com.abs.crawler"/>
+
+    <bean id="actorSystem" class="com.abs.crawler.akka.ActorSystemFactoryBean">
+        <property name="name" value="myActorSystem"/>
+        <property name="config">
+            <bean class="com.typesafe.config.ConfigFactory" factory-method="load">
+                <constructor-arg value="akkaActor.conf"/>
+            </bean>
+        </property>
+    </bean>
+
+    <mongo:mongo-client id="mongo" host="127.0.0.1" port="27017" credentials="root:wanghao8112211@useless">
+        <mongo:client-options connections-per-host="100"
+                              threads-allowed-to-block-for-connection-multiplier="100"
+                              connect-timeout="3000"
+                              max-wait-time="10000"
+                              socket-keep-alive="true"
+                              socket-timeout="10000"
+        />
+    </mongo:mongo-client>
+
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg ref="mongo"/>
+        <constructor-arg name="databaseName" value="useless"/>
+    </bean>
+
+</beans>
