@@ -112,7 +112,7 @@ public class ImageCrawler extends AbstractCrawler {
             imageParams.param(Constants.ImageParamKeys.OFFSET, offset);
             imageParams.param(Constants.ImageParamKeys.COUNT, count);
             imageParams.param(Constants.ImageParamKeys.COOKIES, response.getCookies());
-            CrawlerMessage imageMessage = new CrawlerMessage(imageParams, ImageCrawler.class.getName(), 3);
+            CrawlerMessage imageMessage = new CrawlerMessage(imageParams, ImageCrawler.class.getName(), 1);
             retryer.retry(imageMessage);
 //            ActorRef imageCrawler = actorSystem.actorOf(SpringProps.create(actorSystem, ImageCrawler.class));
 //            imageCrawler.tell(imageMessage, null);

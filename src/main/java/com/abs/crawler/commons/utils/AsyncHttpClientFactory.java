@@ -11,11 +11,8 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.ExecutionException;
@@ -132,36 +129,4 @@ public class AsyncHttpClientFactory {
         sslcontext.init(null, new TrustManager[] { easyTrustManager }, null);
         return sslcontext;
     }
-
-    public static SSLContext getSSLContext(boolean acceptAnyCertificate) throws GeneralSecurityException, IOException {
-        // SSLContext.getDefault() doesn't exist in JDK5
-        return acceptAnyCertificate ? looseTrustManagerSSLContext : SSLContext.getInstance("Default");
-    }
-
-    static class LooseTrustManager implements X509TrustManager {
-
-        public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[0];
-        }
-
-        public void checkClientTrusted(X509Certificate[] certs, String authType) {
-        }
-
-        public void checkServerTrusted(X509Certificate[] certs, String authType) {
-        }
-    }
-
-    private static SSLContext looseTrustManagerSSLContext = looseTrustManagerSSLContext();
-
-    private static SSLContext looseTrustManagerSSLContext() {
-        try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, new TrustManager[] { new LooseTrustManager() }, new SecureRandom());
-            return sslContext;
-        } catch (Exception e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
-
 }

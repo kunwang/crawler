@@ -1,5 +1,7 @@
 package com.abs.crawler.commons.repository;
 
+import org.springframework.data.mongodb.core.query.Query;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -26,5 +28,7 @@ public interface BaseRepository<T> {
     void insert(Collection<T> objects);
 
     void remove(String id);
+
+    long count(Query query);
 
 }

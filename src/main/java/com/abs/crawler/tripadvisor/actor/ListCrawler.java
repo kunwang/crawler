@@ -8,6 +8,8 @@ import com.abs.crawler.commons.message.Params;
 import com.abs.crawler.commons.retry.Retryer;
 import com.abs.crawler.commons.utils.HttpUtils;
 import com.abs.crawler.tripadvisor.Constants;
+import com.abs.crawler.tripadvisor.domain.DetailPage;
+import com.abs.crawler.tripadvisor.repository.DetailPageRepository;
 import com.ning.http.client.Request;
 import com.ning.http.client.Response;
 import com.ning.http.client.cookie.Cookie;
@@ -48,12 +50,17 @@ public class ListCrawler extends AbstractCrawler {
     @Resource
     private Retryer retryer;
 
+    @Resource
+    private DetailPageRepository detailPageRepository;
+
+
     @Override
     public Request buildRequest(Params params) {
         int index = (Integer) params.get(Constants.ListParamKeys.INDEX);
-        LOGGER.info("list crawler start , index = {}", index);
+
         List<Cookie> cookies = (List<Cookie>)params.get(Constants.ListParamKeys.COOKIES);
         String url = String.format(LIST_URL_TEMPLATE, index * PAGE_COUNT);
+        LOGGER.info("list crawler start , index = {}, url = {}", index, url);
         return HttpUtils.buildRequest(url, cookies);
     }
 
@@ -70,7 +77,7 @@ public class ListCrawler extends AbstractCrawler {
             LOGGER.warn("list crawler parse error, identifier = {}, message = {}", IDENTIFIER, message);
             return;
         }
-        Elements elements = doc.select("a[class=photo_link]");
+        Elements elements = doc.select(".shortSellDetails .title a");
         if (elements.size() <= 0) {
             LOGGER.warn("list crawler items error, identifier = {}, result = {}", IDENTIFIER, result);
             return;
@@ -79,7 +86,7 @@ public class ListCrawler extends AbstractCrawler {
         int count = 0;
         for (Element element : elements) {
             String url = element.attr("href");
-            if (StringUtils.isBlank(url)) {
+            if (StringUtils.isBlank(url) || StringUtils.startsWith(url,"/Guide-")) {
                 LOGGER.warn("list crawler item empty, identifier = {}, item = {}", IDENTIFIER, element);
                 continue;
             }
@@ -92,17 +99,21 @@ public class ListCrawler extends AbstractCrawler {
 
             String id = StringUtils.replace(arr[2], "d", "");
 
-            Params detailParams = new Params();
-            detailParams.param(Constants.DetailParamKeys.URL, url);
-            detailParams.param(Constants.DetailParamKeys.ID, id);
-            detailParams.param(Constants.DetailParamKeys.GEO_ID, GEO_ID);
-            detailParams.param(Constants.DetailParamKeys.COOKIES, response.getCookies());
-            CrawlerMessage detailMessage = new CrawlerMessage(detailParams, DetailCrawler.class.getName(), 30 * count);
+            DetailPage detailPage = detailPageRepository.query(id);
+            if (detailPage == null) {
+                Params detailParams = new Params();
+                detailParams.param(Constants.DetailParamKeys.URL, url);
+                detailParams.param(Constants.DetailParamKeys.ID, id);
+                detailParams.param(Constants.DetailParamKeys.GEO_ID, GEO_ID);
+                detailParams.param(Constants.DetailParamKeys.COOKIES, response.getCookies());
+                CrawlerMessage detailMessage = new CrawlerMessage(detailParams, DetailCrawler.class.getName(), 5 * (count / 5));
 
-            retryer.retry(detailMessage);
+                retryer.retry(detailMessage);
+                count ++;
+            }
 //            ActorRef detailCrawler = actorSystem.actorOf(SpringProps.create(actorSystem, DetailCrawler.class));
 //            detailCrawler.tell(detailMessage, null);
-            count ++;
+
         }
 
         Element totalPageElement = doc.select(".pageNumbers a").last();
@@ -123,7 +134,7 @@ public class ListCrawler extends AbstractCrawler {
         Params params = new Params();
         params.param(Constants.ListParamKeys.INDEX, nextPageIndex);
         params.param(Constants.ListParamKeys.COOKIES, response.getCookies());
-        CrawlerMessage listMessage = new CrawlerMessage(params, ListCrawler.class.getName(), 180);
+        CrawlerMessage listMessage = new CrawlerMessage(params, ListCrawler.class.getName(), count + 1);
         // for delay
         retryer.retry(listMessage);
 

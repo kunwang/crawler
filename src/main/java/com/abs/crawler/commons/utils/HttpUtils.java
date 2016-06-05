@@ -11,6 +11,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author hao.wang
@@ -40,6 +41,18 @@ public class HttpUtils {
     public static Request buildRequest(HttpRequestType type, String url, String body) {
         FluentCaseInsensitiveStringsMap headers = defaultHeaders();
         return buildRequest(headers, type, url, body, new ArrayList<Cookie>());
+    }
+
+    public static Request buildRequest(String url, Map<String,String> form) {
+        FluentCaseInsensitiveStringsMap headers = defaultHeaders();
+        RequestBuilder requestBuilder = new RequestBuilder();
+        requestBuilder.setHeaders(headers).setMethod(HttpRequestType.POST.name()).setUrl(url);
+        if (form != null && !form.isEmpty()) {
+            for (Map.Entry<String,String> entry : form.entrySet()) {
+                requestBuilder.addFormParam(entry.getKey(), entry.getValue());
+            }
+        }
+        return requestBuilder.build();
     }
 
     public static Request buildRequest(HttpRequestType type, String url, List<Param> params, Collection<Cookie> cookies) {

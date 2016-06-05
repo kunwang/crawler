@@ -42,6 +42,8 @@ public class ReviewCrawler extends AbstractCrawler {
 
     private static final Joiner NAME_JOINER = Joiner.on("_");
 
+    private static final String REQUEST_URL = "REQUEST_URL";
+
     @Resource
     private ActorSystem actorSystem;
 
@@ -75,6 +77,7 @@ public class ReviewCrawler extends AbstractCrawler {
         } else {
             url = String.format(REVIEW_URL_TEMPLATE, geoId, restaurantId, offset, nameJoin);
         }
+        params.param(REQUEST_URL, url);
         return HttpUtils.buildRequest(url, cookies);
     }
 
@@ -93,7 +96,8 @@ public class ReviewCrawler extends AbstractCrawler {
         }
         Elements reviewElements = doc.select("div[id^=review_]");
         if (reviewElements.isEmpty()) {
-            LOGGER.warn("review crawler review empty, identifier = {}, message = {}, result = {}", IDENTIFIER, message, result);
+            String requestUrl = (String)message.getParams().get(REQUEST_URL);
+            LOGGER.warn("review crawler review empty, identifier = {}, message = {}, requestUrl = {}", IDENTIFIER, message, requestUrl);
             return;
         }
 
@@ -126,7 +130,7 @@ public class ReviewCrawler extends AbstractCrawler {
         expandParams.param(Constants.ExpandReviewParamKeys.REVIEW_IDS, reviewIds);
         expandParams.param(Constants.ExpandReviewParamKeys.REVIEW_COUNT, reviewCount);
         expandParams.param(Constants.ExpandReviewParamKeys.COOKIES, response.getCookies());
-        CrawlerMessage expandReviewMessage = new CrawlerMessage(expandParams, ExpandReviewCrawler.class.getName(), 2);
+        CrawlerMessage expandReviewMessage = new CrawlerMessage(expandParams, ExpandReviewCrawler.class.getName(), 1);
         retryer.retry(expandReviewMessage);
 //        ActorRef expandReviewCrawler = actorSystem.actorOf(SpringProps.create(actorSystem, ExpandReviewCrawler.class));
 //        expandReviewCrawler.tell(expandReviewMessage, null);

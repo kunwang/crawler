@@ -34,4 +34,5 @@ public class OpenHour {
     public void setHourRange(String hourRange) {
         this.hourRange = hourRange;
     }
+
 }

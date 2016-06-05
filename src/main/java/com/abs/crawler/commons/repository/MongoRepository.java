@@ -106,4 +106,8 @@ public abstract class MongoRepository<T extends MongoCollection> implements Base
     public void remove(String id) {
         mongoTemplate.remove(new Query(Criteria.where(ID).is(id)), this.getClz());
     }
+
+    public long count(Query query) {
+        return mongoTemplate.count(query, this.getClz());
+    }
 }
